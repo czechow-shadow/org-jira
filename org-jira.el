@@ -1190,13 +1190,14 @@ ISSUES is a list of `org-jira-sdk-issue' records."
             (callback-add
              (cl-function
               (lambda (&key _data &allow-other-keys)
+                (org-jira-delete-current-comment)
+                ;; @TODO :optim: Has to be a better way to do this
+                ;; than delete region (like update the unmarked
+                ;; one)
                 (ensure-on-issue-id-with-filename
                     issue-id filename
-                    ;; @TODO :optim: Has to be a better way to do this
-                    ;; than delete region (like update the unmarked
-                    ;; one)
-                    (org-jira-delete-current-comment)
-                    (org-jira-update-comments-for-current-issue))))))
+                    (org-jira-update-comments-for-current-issue)
+                    )))))
         (if comment-id
             (jiralib-edit-comment issue-id comment-id comment callback-edit)
           (jiralib-add-comment issue-id comment callback-add))))))
@@ -2106,7 +2107,8 @@ otherwise it should return:
                                                        (jiralib-get-priorities)))
                    (cons 'description org-issue-description)
                    (cons 'assignee (jiralib-get-user org-issue-assignee))
-                   (cons 'reporter (jiralib-get-user org-issue-reporter))
+                   ;; czechow: commented out, since it breaks PUT REST call
+                   ;; (cons 'reporter (jiralib-get-user org-issue-reporter))
                    (cons 'summary (org-jira-strip-priority-tags (org-jira-get-issue-val-from-org 'summary)))
                    (cons 'issuetype (org-jira-get-id-name-alist org-issue-type
                                                         (jiralib-get-issue-types))))))
@@ -2218,11 +2220,11 @@ it is a symbol, it will be converted to string."
 
 (defun org-jira-id ()
   "Get the ID entry for the current heading."
-  (org-entry-get (point) "ID"))
+  (org-entry-get (point) "ID" t))
 
 (defun org-jira-filename ()
   "Get the ID entry for the current heading."
-  (org-entry-get (point) "filename"))
+  (org-entry-get (point) "filename" t))
 
 ;;;###autoload
 (defun org-jira-browse-issue ()
